@@ -1,0 +1,60 @@
+def encode_ethos_id(a: float, b: float, c: float, depth: int = 3) -> int:
+
+    # Normalize inputs to ensure strict barycentric coordinates summing to 1.0 in compliance with ternary plot
+    total = a + b + c
+    if total == 0:
+        return 0
+    
+    u, v, w = a / total, b / total, c / total
+    
+    address = ""
+    
+    for _ in range(depth):
+        # Determine which quadrant of the current triangle scale the point falls into
+        # 0 = Top Apex (A), 1 = Bottom Left (B), 2 = Bottom Right (C), 3 = Center Mix
+        if u >= 0.5:
+            address += "0"
+            u = (u - 0.5) * 2
+            v *= 2
+            w *= 2
+        elif v >= 0.5:
+            address += "1"
+            u *= 2
+            v = (v - 0.5) * 2
+            w *= 2
+        elif w >= 0.5:
+            address += "2"
+            u *= 2
+            v *= 2
+            w = (w - 0.5) * 2
+        else:
+            address += "3"
+            # Invert coordinates to map inside the central sub-triangle
+            u_next = (0.5 - u) * 2
+            v_next = (0.5 - v) * 2
+            w_next = (0.5 - w) * 2
+            u, v, w = u_next, v_next, w_next
+
+    # Convert the quaternary string (Base 4 path) into a single decimal integer ID
+    return int(address, 4)
+
+
+
+if __name__ == "__main__":
+    print("--- Ghostcoil Ethos ID Compilation Test ---\n")
+    
+    # Example 1: Extremely heavy alignment toward System A (Top)
+    apex_a = encode_ethos_id(90, 5, 5)
+    print(f"Player leans 90% into System A  -> Ethos ID: {apex_a}")
+    
+    # Example 2: Slightly shifted off-center from System A towards B
+    lean_ab = encode_ethos_id(75, 20, 5)
+    print(f"Player nudged toward System B   -> Ethos ID: {lean_ab}")
+    
+    # Example 3: Deep inside the central mixing zone (Balanced player)
+    dead_center = encode_ethos_id(33.3, 33.3, 33.3)
+    print(f"Player perfectly balanced       -> Ethos ID: {dead_center}")
+    
+    # Example 4: Heavy alignment toward System C (Bottom Right)
+    apex_c = encode_ethos_id(10, 10, 80)
+    print(f"Player leans 80% into System C  -> Ethos ID: {apex_c}")
